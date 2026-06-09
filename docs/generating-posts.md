@@ -4,11 +4,11 @@ This blog publishes three kinds of auto-generated posts, all written to `src/con
 
 | Post type | Slug pattern | Cadence | Source of data |
 | --- | --- | --- | --- |
-| HN daily digest | `hn-daily-YYYY-MM-DD` | daily | `news-aggregator` skill (Hacker News) |
+| HN daily digest | `hn-daily-YYYY-MM-DD` | daily | **HN front page — all 30 posts** (HN official API for ranking/scores + `news-aggregator` skill for article text) |
 | Portfolio research | `portfolio-YYYY-MM-DD` | trading days only | `/trading-ideas:research` per ticker + live quotes |
 | Watchlist | `watchlist-YYYY-MM-DD` | ad-hoc | `/trading-ideas:research` per ticker + live quotes |
 
-A scheduled remote agent runs all of this automatically at **11 PM US Pacific** (cron `0 6 * * *` UTC). Manage it at <https://claude.ai/code/routines/trig_01Nf4BpssoMCmB77BELf4T3B>. The steps below are the same whether a human or the routine runs them.
+The **HN digest** is generated automatically every day by a **local macOS launchd LaunchAgent** (`com.guodong.astro-blog-daily`): it runs Claude Code headlessly at **11 PM America/Los_Angeles**, regenerates `hn-daily-DATE.md` per §1, builds, and pushes to `main`. Runner: `~/.claude/blog-daily/run.sh`; logs: `~/.claude/blog-daily/last-run.log`; schedule: `~/Library/LaunchAgents/com.guodong.astro-blog-daily.plist`. Manage with `launchctl list | grep astro-blog-daily` and `launchctl unload/load -w <plist>`. The **portfolio** and **watchlist** posts are generated manually (the portfolio needs the private cost-basis CSV, which stays local). The steps below are the same whether a human or the agent runs them.
 
 ---
 
@@ -27,19 +27,31 @@ A scheduled remote agent runs all of this automatically at **11 PM US Pacific** 
 
 ## 1. HN daily digest (`hn-daily-YYYY-MM-DD.md`)
 
-**Fetch** the last-24h hot stories with article text:
-```bash
-cd /tmp/news-agg
-./.venv/bin/python scripts/fetch_news.py --source hackernews --limit 12 --deep --no-save > /tmp/hn.json
-```
-Each JSON item has `title, url, hn_url, heat, time, content`. If the skill errors, fall back to `curl -s 'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=15'`.
+**Source: only [news.ycombinator.com](https://news.ycombinator.com/). Cover the ENTIRE front page — all 30 posts — in front-page ranking order (rank 1→30), _not_ sorted by points.**
 
-**Write** `src/content/posts/hn-daily-DATE.md`, in **Simplified Chinese**, items **ordered by Heat (desc)**. The `--deep` `content` truncates at ~3000 chars — if an item looks thin, `WebFetch` its `url` for the full article so you don't miss key points. Each item uses the skill's Unified Report Template, with a **~one-minute-read** summary:
+**Fetch** in two parts:
+
+1. Authoritative front-page ranking + live scores + comment counts, from HN's official API:
+   ```bash
+   # first 30 ids = home page (page 1), already in HN ranking order
+   curl -s https://hacker-news.firebaseio.com/v0/topstories.json | python3 -c "import json,sys;print(*json.load(sys.stdin)[:30])"
+   # per id: title, url, score, descendants(=comments), time(epoch), type
+   curl -s https://hacker-news.firebaseio.com/v0/item/<id>.json
+   ```
+2. Article text for the summaries, via the skill (merge onto the API list by `url`):
+   ```bash
+   cd ~/.claude/skills/news-aggregator-skill   # or /tmp/news-agg
+   ./.venv/bin/python scripts/fetch_news.py --source hackernews --limit 30 --deep --no-save > /tmp/hn.json
+   ```
+
+For any post the skill can't read (PDF, JS/SPA pages, **Ask HN / text posts** which have no `url`), `WebFetch` the article or the HN discussion page, or summarize from the title + public knowledge **with an explicit caveat**. Include job/Show HN/Launch HN/Ask HN posts too — _every_ front-page item.
+
+**Write** `src/content/posts/hn-daily-DATE.md`, in **Simplified Chinese**, all 30 items in **front-page ranking order**. Each item shows points (Heat), relative time, and the **comment count** on the Discussion link. For Ask HN / text posts, link the title to the HN item. The `--deep` `content` truncates at ~3000 chars — if an item looks thin, `WebFetch` its `url` for the full article. Per-item, a **~one-minute-read** summary:
 
 ```markdown
-#### N. [中文标题](url)
-- **Source**: Hacker News | **Time**: <相对时间> | **Heat**: 🔥 <数字>
-- **Links**: [Discussion](hn_url)
+#### N. [中文标题](url 或 hn_url)
+- **Source**: Hacker News | **Time**: <相对时间> | **Heat**: 🔥 <点赞数>
+- **Links**: [Discussion · <N> 条评论](hn_url)
 - **Summary**: 一段约一分钟阅读（约 150–220 字）的中文摘要，覆盖原文关键事实、数据与结论，不遗漏要点（勿臆造）。站点拒绝抓取时据标题/公开资料概述并标注。
 - **Deep Dive**: 💡 **Insight**: 1–2 句中文洞见（影响/价值）。
 ```
@@ -54,7 +66,7 @@ slug: hn-daily-DATE
 featured: false
 draft: false
 tags: [hacker-news, daily]
-description: "由 news-aggregator 技能抓取 Hacker News 近 24 小时热门，生成中文深度精读（每条约一分钟阅读）—— DATE。"
+description: "抓取 Hacker News 首页全部 30 条，按首页排名顺序生成中文深度精读（每条约一分钟阅读）—— DATE。"
 ---
 ```
 
