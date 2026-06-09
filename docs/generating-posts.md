@@ -87,7 +87,7 @@ curl -s 'https://query1.finance.yahoo.com/v8/finance/chart/<TICKER>'
 - **Never** print dollar holding values or share counts — only prices, percentages, ratings, targets, and news.
 - `我的总收益率` = `(End − avg_cost)/avg_cost`. The per-ticker **average cost is private** and lives in the remote routine's config — it is **not** stored in this repo.
 
-Frontmatter: `title: "投资组合深度研究 · DATE"`, `slug: portfolio-DATE`, `tags: [portfolio, equity-research, investing]`.
+Frontmatter: `title: "投资组合深度研究：8 大主题下的 30 只持仓（YYYY 年 M 月 D 日）"` (the title **must include the full date with the day**, not just year/month), `slug: portfolio-DATE`, `tags: [portfolio, equity-research, investing]`.
 
 ---
 
