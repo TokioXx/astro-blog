@@ -8,7 +8,7 @@ This blog publishes three kinds of auto-generated posts, all written to `src/con
 | Portfolio research | `portfolio-YYYY-MM-DD` | trading days only | `/trading-ideas:research` per ticker + live quotes |
 | Watchlist | `watchlist-YYYY-MM-DD` | ad-hoc | `/trading-ideas:research` per ticker + live quotes |
 
-The **HN digest** is generated automatically every day by a **local macOS launchd LaunchAgent** (`com.guodong.astro-blog-daily`): it runs Claude Code headlessly at **11 PM America/Los_Angeles**, regenerates `hn-daily-DATE.md` per §1, builds, and pushes to `main`. Runner: `~/.claude/blog-daily/run.sh`; logs: `~/.claude/blog-daily/last-run.log`; schedule: `~/Library/LaunchAgents/com.guodong.astro-blog-daily.plist`. Manage with `launchctl list | grep astro-blog-daily` and `launchctl unload/load -w <plist>`. The **portfolio** and **watchlist** posts are generated manually (the portfolio needs the private cost-basis CSV, which stays local). The steps below are the same whether a human or the agent runs them.
+The **HN digest** is generated automatically every day by a **local macOS launchd LaunchAgent** (`com.guodong.astro-blog-daily`): it runs Claude Code headlessly at **5 PM America/Los_Angeles**, regenerates `hn-daily-DATE.md` per §1, builds, and pushes to `main`. Runner: `~/.claude/blog-daily/run.sh`; logs: `~/.claude/blog-daily/last-run.log`; schedule: `~/Library/LaunchAgents/com.guodong.astro-blog-daily.plist`. Manage with `launchctl list | grep astro-blog-daily` and `launchctl unload/load -w <plist>`. The **portfolio** and **watchlist** posts are generated manually (the portfolio needs the private cost-basis CSV, which stays local). The steps below are the same whether a human or the agent runs them.
 
 ---
 
