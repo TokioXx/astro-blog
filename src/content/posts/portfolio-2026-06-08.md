@@ -1,6 +1,6 @@
 ---
 author: Guodong Xie
-pubDatetime: 2026-06-08T23:30:00Z
+pubDatetime: 2026-06-08T12:00:00Z
 title: "投资组合深度研究：8 大主题下的 30 只持仓（2026 年 6 月 8 日）"
 slug: portfolio-2026-06-08
 featured: false
